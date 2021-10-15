@@ -1,20 +1,19 @@
 import { useState, useRef } from 'react';
-import { useSelector, useDispatch } from 'react-redux';
-import shortid from 'shortid';
 import toast from 'react-hot-toast';
-import { addContact } from '../../redux/Phonebook/phonebook-actions';
-import { getContacts } from '../../redux/Phonebook/phonebook-selectors';
+import shortid from 'shortid';
+
+import { LoaderSpinnerDots } from 'Components/Spinner/spinner';
+import { useCreateContactMutation } from 'redux/Phonebook/ContactSlice.jsx';
 import css from './phonebook-css/ContactForm.module.css';
 
-export default function ContactForm() {
-  const contacts = useSelector(getContacts);
-  const dispatch = useDispatch();
+export default function ContactForm({ contacts }) {
+  const [createContact, { isLoading }] = useCreateContactMutation();
 
   const [name, setName] = useState('');
-  const [number, setNumber] = useState('');
+  const [phone, setPhone] = useState('');
 
   const nameId = useRef(shortid.generate());
-  const numberId = useRef(shortid.generate());
+  const phoneId = useRef(shortid.generate());
 
   const handleContactChange = e => {
     switch (e.target.name) {
@@ -22,8 +21,8 @@ export default function ContactForm() {
         setName(e.target.value);
         break;
 
-      case 'number':
-        setNumber(e.target.value);
+      case 'phone':
+        setPhone(e.target.value);
         break;
 
       default:
@@ -34,34 +33,30 @@ export default function ContactForm() {
   const handleSubmit = e => {
     e.preventDefault();
 
+    const toastStyle = {
+      style: {
+        borderRadius: '10px',
+        background: '#e8f2f2',
+        color: '#000',
+      },
+    };
+
     if (contacts.find(con => con.name.toLowerCase() === name.toLowerCase())) {
-      toast(`Name '${name}' is alresdy in contacts`, {
-        icon: '📞',
-        style: {
-          borderRadius: '10px',
-          background: '#666',
-          color: '#fff',
-        },
-      });
+      toast(`Name '${name}' is alresdy in contacts`, toastStyle);
 
       return;
     }
 
-    if (contacts.find(con => con.number === number)) {
-      toast(`Number '${number}' is alresdy in contacts`, {
-        icon: '📞',
-        style: {
-          borderRadius: '10px',
-          background: '#666',
-          color: '#fff',
-        },
-      });
+    if (contacts.find(con => con.phone === phone)) {
+      toast(`Number '${phone}' is alresdy in contacts`, toastStyle);
       return;
     }
 
-    dispatch(addContact({ name, number }));
+    createContact({ name, phone });
+    toast.success(`Contact '${name}' is added`);
+
     setName('');
-    setNumber('');
+    setPhone('');
   };
 
   return (
@@ -85,15 +80,15 @@ export default function ContactForm() {
 
         <br />
 
-        <label htmlFor={numberId.current} className={css.label}>
+        <label htmlFor={phoneId.current} className={css.label}>
           Number:
           <input
             className={css.number}
             type="tel"
-            name="number"
+            name="phone"
             placeholder="Enter number"
-            value={number}
-            id={numberId.current}
+            value={phone}
+            id={phoneId.current}
             onChange={handleContactChange}
             pattern="\+?\d{1,4}?[-.\s]?\(?\d{1,3}?\)?[-.\s]?\d{1,4}[-.\s]?\d{1,4}[-.\s]?\d{1,9}"
             title="Номер телефона должен состоять цифр и может содержать пробелы, тире, круглые скобки и может начинаться с +"
@@ -103,8 +98,8 @@ export default function ContactForm() {
 
         <br />
 
-        <button type="submit" className={css.btn}>
-          add contact
+        <button type="submit" className={css.btn} disabled={isLoading}>
+          {isLoading ? <LoaderSpinnerDots /> : 'add contact'}
         </button>
       </form>
     </div>

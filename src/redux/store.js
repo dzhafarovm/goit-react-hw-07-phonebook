@@ -3,40 +3,15 @@ import {
   getDefaultMiddleware,
   combineReducers,
 } from '@reduxjs/toolkit';
-import logger from 'redux-logger';
-import {
-  persistStore,
-  persistReducer,
-  FLUSH,
-  REHYDRATE,
-  PAUSE,
-  PERSIST,
-  PURGE,
-  REGISTER,
-} from 'redux-persist';
-import storage from 'redux-persist/lib/storage';
+// import logger from 'redux-logger';
 
-import counterReducer from './Counter/counter-reducer.jsx';
-import phonebookReducer from './Phonebook/phonebook-reducer.jsx';
+import { contactApi } from 'redux/Phonebook/ContactSlice';
+import { setupListeners } from '@reduxjs/toolkit/dist/query';
 
-const middleware = [
-  ...getDefaultMiddleware({
-    serializableCheck: {
-      ignoredActions: [FLUSH, REHYDRATE, PAUSE, PERSIST, PURGE, REGISTER],
-    },
-  }),
-  logger,
-];
-
-const phonebookPersistConfig = {
-  key: 'contacts',
-  storage,
-  blacklist: ['filter'],
-};
+const middleware = [...getDefaultMiddleware(), contactApi.middleware];
 
 const rootReducer = combineReducers({
-  counter: counterReducer,
-  phonebook: persistReducer(phonebookPersistConfig, phonebookReducer),
+  [contactApi.reducerPath]: contactApi.reducer,
 });
 
 export const store = configureStore({
@@ -45,4 +20,4 @@ export const store = configureStore({
   devTools: process.env.NODE_ENV === 'development',
 });
 
-export const persistore = persistStore(store);
+setupListeners(store.dispatch);
